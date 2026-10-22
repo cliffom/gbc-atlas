@@ -1,0 +1,30 @@
+[project]
+name = "gbc-atlas"
+version = "0.1.0"
+description = "Deterministic palette-explicit Game Boy Color atlas to C conversion"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["Pillow>=12.3,<13"]
+
+[project.urls]
+Repository = "https://github.com/cliffom/gbc-atlas"
+
+[project.scripts]
+gbc-atlas = "gbc_atlas.cli:main"
+
+[build-system]
+requires = ["poetry-core>=2.0,<3.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{include = "gbc_atlas", from = "src"}]
+
+[tool.poetry.group.dev.dependencies]
+ruff = ">=0.15.13,<0.16.0"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

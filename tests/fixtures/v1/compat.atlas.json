@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "compat",
+  "png": "atlas.png",
+  "palettes": [
+    [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        10,
+        10,
+        10
+      ],
+      [
+        20,
+        20,
+        20
+      ],
+      [
+        31,
+        31,
+        31
+      ]
+    ]
+  ],
+  "cell_palettes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "regions": [
+    {
+      "name": "actor",
+      "kind": "sprite",
+      "x": 0,
+      "y": 0,
+      "width": 16,
+      "height": 16,
+      "origin": [
+        8,
+        15
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "idle",
+      "frames": [
+        {
+          "region": "actor",
+          "duration_ms": 125
+        }
+      ]
+    }
+  ],
+  "custom_metadata": {
+    "purpose": "Manifest v1 compatibility fixture; synthetic pixels only"
+  },
+  "approval": {
+    "status": "approved",
+    "digest": "1b555b26485fbe7338af9408e9237f58ce0902100e89fd336c1bd8c308110a4b",
+    "by": "Synthetic fixture",
+    "date": "2026-10-22",
+    "evidence": "Technical fixture, not human artwork approval"
+  }
+}

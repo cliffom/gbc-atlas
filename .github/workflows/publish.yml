@@ -1,0 +1,54 @@
+name: Publish Python package
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: pip install poetry==2.4.2
+      - name: Verify SemVer tag, package version, and prerelease status
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
+        run: >-
+          python tools/check_release.py
+          --tag "$RELEASE_TAG"
+          --version "$(poetry version --short)"
+          --prerelease "$IS_PRERELEASE"
+
+  check:
+    needs: validate
+    uses: ./.github/workflows/check.yml
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/gbc-atlas
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+      - name: Publish checked distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

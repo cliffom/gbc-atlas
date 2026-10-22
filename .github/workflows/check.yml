@@ -1,0 +1,40 @@
+name: Check
+on:
+  push:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install poetry==2.4.2
+      - run: poetry install
+      - run: poetry run ruff check .
+      - run: poetry run ruff format --check .
+      - run: poetry check --lock
+      - run: poetry run python -m unittest discover -s tests -v
+      - run: poetry build
+      - name: Test installed wheel and bundled resources
+        run: |
+          python -m venv /tmp/gbc-atlas-wheel
+          /tmp/gbc-atlas-wheel/bin/pip install dist/*.whl
+          /tmp/gbc-atlas-wheel/bin/python -m unittest discover -s tests -v
+          /tmp/gbc-atlas-wheel/bin/gbc-atlas skill-path
+      - name: Retain tested distributions
+        if: matrix.python == '3.14'
+        uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+          if-no-files-found: error

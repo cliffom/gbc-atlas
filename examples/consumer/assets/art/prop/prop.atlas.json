@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "id": "prop",
+  "png": "atlas.png",
+  "palettes": [
+    [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        10,
+        10,
+        10
+      ],
+      [
+        20,
+        20,
+        20
+      ],
+      [
+        31,
+        31,
+        31
+      ]
+    ]
+  ],
+  "cell_palettes": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "regions": [
+    {
+      "name": "actor",
+      "kind": "sprite",
+      "x": 0,
+      "y": 0,
+      "width": 16,
+      "height": 16,
+      "origin": [
+        8,
+        15
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "idle",
+      "frames": [
+        {
+          "region": "actor",
+          "duration_ms": 125
+        }
+      ]
+    }
+  ],
+  "custom_metadata": {
+    "purpose": "Synthetic consumer example, not production artwork"
+  },
+  "approval": {
+    "status": "approved",
+    "digest": "a52ee113c90323eb2c894908709f6f249f3873e6334d290b5b62ffa67c7938f3",
+    "by": "Synthetic technical fixture",
+    "date": "2026-10-22",
+    "evidence": "Test stand-in only; no human artwork approval is claimed"
+  }
+}

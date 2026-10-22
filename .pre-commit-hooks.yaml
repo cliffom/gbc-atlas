@@ -1,0 +1,7 @@
+- id: gbc-atlas-check
+  name: Approved atlas and generated C consistency
+  description: Check configured approved packs, generated output, and retention without changes.
+  entry: gbc-atlas check
+  language: python
+  pass_filenames: false
+  always_run: true

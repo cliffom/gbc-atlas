@@ -7,7 +7,9 @@ description: Author or revise Game Boy Color tile and sprite atlases through Ase
 
 Read the consuming project's contributor instructions, art direction, asset paths,
 and handoff commands. Read [the format contract](references/format.md) before
-preparing a manifest or estimating encoding costs. Use the converter and this
+preparing a manifest or estimating encoding costs. Read
+[project handoff configuration](references/project.md) when setting up a consumer
+or promoting an approved pack. Use the converter and this
 skill from the same release. Project-specific choices belong in the consumer's
 instructions; this skill does not select gameplay, perspective, or runtime slots.
 
@@ -64,17 +66,23 @@ approval. A digest cannot establish that a PNG matches an editable document.
 Do not paint, resize, quantize, or repair pixels in a conversion script, and never
 hand-edit generated C.
 
-Use the project's handoff wrapper when provided. Otherwise run:
+Use the configured shared CLI for standard project handoffs:
 
 ```sh
-gbc-atlas generate --input <production-directory> --output <generated-directory>
-gbc-atlas check --input <production-directory> --output <generated-directory>
+gbc-atlas handoff
+gbc-atlas check
 ```
 
-These commands enforce recorded approval and never move/delete artwork. Honor
-the consuming project's retention policy and checks. Keep the shared C type
-header aligned with the generator. Link final sources, manifest, generated files,
-and relevant previews; report actual verification and pending work.
+Follow the project's build aliases (such as `make assets`) when provided; they
+should call this same CLI. Configure paths and optional recoverable retirement
+in `[tool.gbc-atlas]`, rather than maintaining a custom Python wrapper. The shared
+[handoff reference](references/project.md) describes preflight, recovery, and
+read-only checks. Without project configuration, explicit `generate/check
+--input ... --output ...` remains available and never retires artwork.
+
+Keep the shared C type header aligned with the generator. Link final sources,
+manifest, generated files, and relevant previews; report actual verification and
+pending work.
 
 Art approval authorizes the approved asset handoff, not unrelated gameplay,
 collision changes, commits, or pushes. Technical validation, human art approval,

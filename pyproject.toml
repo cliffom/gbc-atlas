@@ -1,13 +1,17 @@
 [project]
 name = "gbc-atlas"
-version = "0.1.0"
+version = "0.2.0"
 description = "Deterministic palette-explicit Game Boy Color atlas to C conversion"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["Pillow>=12.3,<13"]
+dependencies = [
+    "Pillow>=12.3,<13",
+    "tomli>=2,<3; python_version < '3.11'",
+]
 
 [project.urls]
 Repository = "https://github.com/cliffom/gbc-atlas"
+Documentation = "https://github.com/cliffom/gbc-atlas/blob/v0.2.0/docs/GETTING_STARTED.md"
 
 [project.scripts]
 gbc-atlas = "gbc_atlas.cli:main"
@@ -18,6 +22,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [{include = "gbc_atlas", from = "src"}]
+include = [
+    {path = "examples", format = "sdist"},
+    {path = "docs", format = "sdist"},
+]
 
 [tool.poetry.group.dev.dependencies]
 ruff = ">=0.15.13,<0.16.0"

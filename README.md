@@ -1,31 +1,104 @@
 # gbc-atlas
 
-Deterministic native PNG + manifest → Game Boy Color 2bpp C arrays.
-No painting, resizing, quantization, palette fitting, or editor connection is
-needed for conversion. Authoring and visual review use Aseprite MCP through the
-bundled skill.
+gbc-atlas converts a native PNG atlas and JSON manifest into Game Boy Color
+2bpp tiles, palette/cell maps, region and animation metadata, and C headers.
+It validates the approved pack, generates reproducible output, and can preserve
+unreferenced artifacts in configured recovery storage.
+
+You can use it directly from a terminal or with an agent's assistance. Conversion
+requires neither an agent nor a running editor. It reads exact palette matches;
+it does not paint, resize, quantize, or repair artwork.
 
 Requires Python 3.10+. The generated code uses standard fixed-width C types and
-is suitable for GBDK-2020. Pillow is the only runtime Python dependency.
+is suitable for GBDK-2020. Pillow handles image reading; Python 3.10 also uses
+Tomli for TOML configuration.
+
+## Choose your starting path
+
+**Working without an agent:** follow the
+[getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/docs/GETTING_STARTED.md).
+Try the complete synthetic pack first, then author/export your own artwork in
+Aseprite, prepare the [manifest](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/src/gbc_atlas/skills/create-atlas/references/format.md),
+review the revision, and record approval. No skill installation or MCP connection
+is required for this direct workflow.
+
+**Working with an agent:** use the same installation and project configuration.
+Run `gbc-atlas skill-path` (or `poetry run gbc-atlas skill-path`) and have the agent
+read that directory's `SKILL.md` and referenced documents. Give it the project's
+art direction, asset brief, draft location, and runtime constraints. The bundled
+skill requires Aseprite MCP for agent drawing and editor review, plus approval
+of the concrete revision before production handoff. Load the installed skill
+directly or copy its entire directory into your client's skill location.
+
+Both routes end with an approved pack and the same `gbc-atlas handoff` / `check`
+commands. Configure paths in `[tool.gbc-atlas]`; no consumer Python wrapper is
+needed. The game compiles the generated C and owns runtime loading, resource
+allocation, and gameplay tests.
 
 ## Install and use
 
-Install a published release with `pip install gbc-atlas`, once releases are
-published. Until then, install this repository at an explicit commit:
+For a fresh C game project, follow the [getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/docs/GETTING_STARTED.md).
+It covers virtual environments or Poetry, a runnable synthetic pack, native C
+compilation, real artwork approval, Make/pre-commit integration, and recovery.
+
+Install the package in your project's environment:
 
 ```sh
-poetry add 'gbc-atlas @ git+https://github.com/cliffom/gbc-atlas.git@<commit>'
-poetry run gbc-atlas validate assets/art/example/example.atlas.json
-poetry run gbc-atlas generate --input assets/art --output src/generated
-poetry run gbc-atlas check --input assets/art --output src/generated
+poetry add gbc-atlas==0.2.0
 ```
 
-`--input` accepts one manifest or a directory searched recursively. Generation
-requires recorded approval of each exact pack revision. Validation prints the
-digest without granting approval. All packs and the output inventory are checked
-before writes. Check is read-only. Neither command moves or deletes artwork;
-project-specific retention, promotion, and runtime integration belong to the
-consumer. Use a dedicated generated directory; orphan C/headers cause failure.
+Add project configuration to `pyproject.toml`:
+
+```toml
+[tool.gbc-atlas]
+manifests = ["assets/art/*/*.atlas.json"]
+output = "src/generated"
+types-header = "include/asset_types.h"
+
+[tool.gbc-atlas.retention]
+roots = ["assets/art", "assets/review"]
+retire-to = "build/review/retired"
+```
+
+Then use the shared handoff directly, without a custom `assets.py`:
+
+```sh
+poetry run gbc-atlas validate assets/art/prop/prop.atlas.json
+poetry run gbc-atlas handoff
+poetry run gbc-atlas check
+```
+
+All paths resolve relative to the configuration file. Pass
+`--config path/to/pyproject.toml` when running elsewhere. Handoff validates every pack's recorded
+approval and output destinations before writes. With retention configured, it
+moves unreferenced artifacts into a unique recovery directory, preserving bytes
+and project-relative paths. The manifest and its declared files are retained;
+`.gitkeep` is preserved. Keep recovery storage ignored and inspect the printed
+path. Removing that storage discards its recovery copies. Omit the retention
+table to disable retirement entirely.
+
+Check is read-only and verifies arrays, the type header, and configured retention.
+Use dedicated generated/managed directories. Symlinks, path escapes, overlapping
+managed/output/retirement directories, duplicate IDs, missing manifests, stale
+approval, and orphan generated C/headers fail before moving/writing files.
+Interrupted I/O can still leave a partial handoff; recovery files are not deleted.
+Handoff does not promote drafts or grant human approval.
+
+- [Complete project configuration](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/src/gbc_atlas/skills/create-atlas/references/project.md)
+- [Executable consumer example](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/examples/consumer/README.md), tested using the
+  installed CLI with synthetic assets and no consumer Python
+
+For simple explicit-input conversion, the original commands remain available:
+
+```sh
+gbc-atlas generate --input assets/art --output src/generated
+gbc-atlas check --input assets/art --output src/generated
+```
+
+These do not use project configuration or retire artwork. `--input` accepts one
+manifest or a recursively searched directory. Configured `generate` is also
+supported but refuses extras that require retirement; use `handoff` for those.
+Do not mix `--config` with explicit input/output arguments.
 
 ## Python API
 
@@ -33,7 +106,7 @@ consumer. Use a dedicated generated directory; orphan C/headers cause failure.
 from pathlib import Path
 from gbc_atlas import load_atlas, render_c, render_types, verify_approval
 
-atlas = load_atlas(Path("assets/art/example/example.atlas.json"))
+atlas = load_atlas(Path("assets/art/prop/prop.atlas.json"))
 verify_approval(atlas)
 outputs = render_c(atlas)  # dict[str, str], no writes
 outputs["asset_types.h"] = render_types()
@@ -43,7 +116,11 @@ outputs["asset_types.h"] = render_types()
 and `dimensions` (columns, rows). `load_atlas` performs technical validation and
 encoding; it does not require approval. `render_c` is also available for technical
 fixtures. Production workflows call `verify_approval` before rendering. The CLI
-enforces that gate. Do not mutate a loaded result before verifying/rendering it;
+enforces that gate. For Python-based integrations, `load_project`,
+`plan_project`, and `apply_handoff` expose the same configured handoff:
+`apply_handoff(plan_project(load_project()), "handoff")`. The command can also be
+`generate` or `check`. Treat a plan as a snapshot
+and do not modify inputs between planning and application. Do not mutate a loaded result before verifying/rendering it;
 reload after source or metadata changes. Invalid contracts raise `ValueError`.
 
 The shared `asset_types.h` defines the C interface version 1. Generate or check it
@@ -60,8 +137,8 @@ Copy that whole directory into your client's skill directory, or load its
 A project-local adapter should identify art direction, paths, checks, budgets,
 and handoff policy. No global skill installation is performed automatically.
 
-- [Shared skill](src/gbc_atlas/skills/create-atlas/SKILL.md)
-- [Manifest v1 and C interface](src/gbc_atlas/skills/create-atlas/references/format.md)
+- [Shared skill](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/src/gbc_atlas/skills/create-atlas/SKILL.md)
+- [Manifest v1 and C interface](https://github.com/cliffom/gbc-atlas/blob/v0.2.0/src/gbc_atlas/skills/create-atlas/references/format.md)
 
 Package version, manifest version, and C interface version are separate contracts.
 The initial extraction preserves manifest v1's digest algorithm and encoding,
@@ -116,7 +193,8 @@ One-time setup before the first release:
    API-token secret. The separate publish job has `id-token: write` and receives
    only the already-tested distribution artifacts.
 
-For each release, update the version (for example, `poetry version 0.1.0`), run
+For each release, update the version and documentation/example/hook release pins
+(for example, `poetry version 0.1.0`), run
 the development checks above, commit the change, and publish the GitHub release
 for the matching tag (`v0.1.0`). For a release candidate use
 `poetry version 0.2.0rc1` and a prerelease tagged `v0.2.0-rc.1`. Released versions

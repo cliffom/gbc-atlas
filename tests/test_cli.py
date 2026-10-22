@@ -33,6 +33,7 @@ class CompatibilityTests(unittest.TestCase):
         skill = files("gbc_atlas").joinpath("skills/create-atlas")
         self.assertTrue(skill.joinpath("SKILL.md").is_file())
         self.assertTrue(skill.joinpath("references/format.md").is_file())
+        self.assertTrue(skill.joinpath("references/project.md").is_file())
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             self.assertEqual(main(["skill-path"]), 0)

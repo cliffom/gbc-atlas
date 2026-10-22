@@ -83,9 +83,9 @@ required for technical conversion. `source`, `preview`, `review_images`, and
 workflow retains the editable sources and relevant review evidence and records
 them in the manifest. Generation additionally requires `approval`.
 
-Consumers may use the declared support files as a retention list, but the
-library never retires or deletes files. Repository handoff policy belongs to
-the consuming project.
+The configured handoff can use these declared files as a retention list for
+opt-in recoverable retirement. See [project configuration](project.md); the
+project chooses managed roots and recovery storage.
 
 The digest binds the manifest excluding `approval`, plus file hashes for the
 atlas PNG and any declared editable sources and review images. It
@@ -101,7 +101,8 @@ all approved packs before writing arrays and `asset_types.h`.
 `gbc-atlas check` accepts the same options and compares expected bytes without
 writing. Stale approval, changed generated data, duplicate IDs, and orphan C or
 headers fail. `asset_types` is reserved for the shared type header. Neither
-command retires artwork. Use the Python API for project-specific handoffs.
+command retires artwork. Configured projects can instead use
+`gbc-atlas handoff` for generation and optional recoverable retirement.
 
 Generated output contains:
 

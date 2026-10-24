@@ -1,5 +1,7 @@
 # gbc-atlas
 
+![gbc-atlas — native palettes, exact pixels. A pixel-art atlas cartridge with an A monogram.](assets/branding/hero.png)
+
 gbc-atlas converts a native PNG atlas and JSON manifest into Game Boy Color
 2bpp tiles, palette/cell maps, region and animation metadata, and C headers.
 It validates the approved pack, generates reproducible output, and can preserve

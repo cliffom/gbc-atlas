@@ -9,7 +9,7 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-from ._validation import require
+from ._validation import require, validate_bank, validate_deduplicate
 
 
 def reject_symlinks(path: Path, root: Path | None = None) -> None:
@@ -54,6 +54,8 @@ class Project:
     output: Path
     types_header: Path
     retention: Retention | None = None
+    bank: str | int | None = None
+    deduplicate: bool = False
 
     def manifests(self) -> list[Path]:
         paths = sorted(
@@ -85,7 +87,8 @@ def load_project(path: Path = Path("pyproject.toml")) -> Project:
     table = tool.get("gbc-atlas")
     require(isinstance(table, dict), f"Missing [tool.gbc-atlas] in {path}")
     require(
-        not set(table) - {"manifests", "output", "types-header", "retention"},
+        not set(table)
+        - {"manifests", "output", "types-header", "retention", "bank", "deduplicate"},
         "Unknown [tool.gbc-atlas] setting",
     )
     patterns = string_list(table.get("manifests"), "manifests")
@@ -111,7 +114,15 @@ def load_project(path: Path = Path("pyproject.toml")) -> Project:
         retired = relative_path(root, policy.get("retire-to"), "retire-to")
         validate_retention(roots, retired, output, types)
         retention = Retention(roots, retired)
-    return Project(root, tuple(patterns), output, types, retention)
+    return Project(
+        root,
+        tuple(patterns),
+        output,
+        types,
+        retention,
+        validate_bank(table.get("bank")),
+        validate_deduplicate(table.get("deduplicate", False)),
+    )
 
 
 def validate_retention(roots, retired, output, types):

@@ -84,6 +84,18 @@ Keep the shared C type header aligned with the generator. Link final sources,
 manifest, generated files, and relevant previews; report actual verification and
 pending work.
 
+For GBDK consumers, inspect ROM capacity and configure optional `bank = "auto"`
+through the shared handoff when needed. All arrays for an atlas share one bank;
+the consumer owns safe fixed-ROM loading, bank switching/restoration, and linker
+capacity checks. Do not patch banking pragmas into generated files.
+
+For VRAM estimates, use `validate <manifest> --deduplicate` and report source
+cells, emitted tiles, and savings separately. Opt into `deduplicate = true` only
+with a consumer loader/preview that resolves named regions through cell maps and
+applies per-cell flips. Sprite Y flips operate on complete 8×16 pairs. Output
+options do not change approved pack digests or establish new art approval; they
+also do not allocate VRAM/palettes or remove the need for consumer ROM tests.
+
 Art approval authorizes the approved asset handoff, not unrelated gameplay,
 collision changes, commits, or pushes. Technical validation, human art approval,
 emulator inspection, and physical-device testing are distinct. Only claim checks

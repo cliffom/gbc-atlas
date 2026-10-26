@@ -13,6 +13,19 @@ def integer(value, low, high):
     return type(value) is int and low <= value <= high
 
 
+def validate_bank(bank):
+    require(
+        bank is None or bank == "auto" or integer(bank, 0, 255),
+        'bank must be "auto" or an integer 0..255 (255 means autobank)',
+    )
+    return bank
+
+
+def validate_deduplicate(value):
+    require(type(value) is bool, "deduplicate must be a boolean")
+    return value
+
+
 def identifier(value):
     return isinstance(value, str) and re.fullmatch(r"[a-z][a-z0-9_]*", value)
 

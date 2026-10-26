@@ -5,7 +5,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from ._validation import require
+from ._validation import require, validate_bank, validate_deduplicate
 from .approval import verify_approval
 from .c_output import render_c, render_types
 from .manifest import load_atlas, source_files
@@ -19,6 +19,7 @@ class HandoffPlan:
     atlas_count: int
     root: Path | None
     retention: Retention | None
+    tile_counts: tuple[tuple[str, int, int], ...] = ()
 
 
 def check_inventory(target, expected):
@@ -36,9 +37,13 @@ def plan_handoff(
     types_header: Path | None = None,
     root: Path | None = None,
     retention: Retention | None = None,
+    bank: str | int | None = None,
+    deduplicate: bool = False,
 ) -> HandoffPlan:
     """Validate every pack and path before retirement or output writes."""
     manifests = sorted(set(manifests))
+    validate_bank(bank)
+    validate_deduplicate(deduplicate)
     require(bool(manifests), "No atlas manifests found")
     types_header = (
         types_header if types_header is not None else output / "asset_types.h"
@@ -53,9 +58,14 @@ def plan_handoff(
     require(not output.exists() or output.is_dir(), "Output must be a directory")
     generated = {}
     retained = set()
+    tile_counts = []
     for path in manifests:
         reject_symlinks(path, root)
-        atlas = load_atlas(path)
+        atlas = load_atlas(path, deduplicate=deduplicate)
+        if deduplicate:
+            tile_counts.append(
+                (atlas.manifest["id"], len(atlas.cell_tiles), len(atlas.tiles) // 16)
+            )
         verify_approval(atlas)
         sources = source_files(path, atlas.manifest)
         # source_files resolves containment; inspect the original paths for symlinks.
@@ -68,7 +78,7 @@ def plan_handoff(
             reject_symlinks(path.parent / name, root)
         retained.add(path.resolve())
         retained.update(sources.values())
-        result = render_c(atlas)
+        result = render_c(atlas, bank=bank)
         require("asset_types.h" not in result, "asset_types is a reserved asset id")
         require(not generated.keys() & result.keys(), "Duplicate asset id")
         generated.update(result)
@@ -124,7 +134,9 @@ def plan_handoff(
                     and path.resolve() not in retained
                 ):
                     extras.append(path)
-    return HandoffPlan(outputs, tuple(extras), len(manifests), root, retention)
+    return HandoffPlan(
+        outputs, tuple(extras), len(manifests), root, retention, tuple(tile_counts)
+    )
 
 
 def plan_project(project: Project) -> HandoffPlan:
@@ -135,6 +147,8 @@ def plan_project(project: Project) -> HandoffPlan:
         types_header=project.types_header,
         root=project.root,
         retention=project.retention,
+        bank=project.bank,
+        deduplicate=project.deduplicate,
     )
 
 

@@ -6,7 +6,13 @@ from pathlib import Path
 
 from PIL import Image
 
-from ._validation import identifier, integer, relative_file, require
+from ._validation import (
+    identifier,
+    integer,
+    relative_file,
+    require,
+    validate_deduplicate,
+)
 from .encoding import encode_cells
 from .model import Atlas
 
@@ -31,9 +37,10 @@ def source_files(path, m):
     return files
 
 
-def load_atlas(path: Path) -> Atlas:
-    """Validate and encode a native PNG pack without modifying any files."""
+def load_atlas(path: Path, *, deduplicate: bool = False) -> Atlas:
+    """Validate/encode a native pack; optional deduplication does not alter its digest."""
     path = Path(path)
+    validate_deduplicate(deduplicate)
     m = json.loads(path.read_text())
     require(isinstance(m, dict), "Manifest must be a JSON object")
     require(m.get("version") == 1, "Unsupported manifest version")
@@ -49,7 +56,7 @@ def load_atlas(path: Path) -> Atlas:
     )
     cols, rows = w // 8, h // 8
     count = cols * rows
-    require(count <= 256, "Initial converter supports at most 256 tiles in VRAM bank 0")
+    require(count <= 256, "Converter supports at most 256 atlas cells")
     palettes = m.get("palettes", [])
     require(1 <= len(palettes) <= 8, "Use 1..8 local palettes")
     colors = []
@@ -128,7 +135,9 @@ def load_atlas(path: Path) -> Atlas:
     require(
         all(kinds), "Every atlas cell must belong to a region; name padding explicitly"
     )
-    tiles, cell_tiles = encode_cells(image, colors, assignments, kinds, cols, rows)
+    tiles, cell_tiles, cell_flags = encode_cells(
+        image, colors, assignments, kinds, cols, rows, deduplicate=deduplicate
+    )
     animations = m.get("animations", [])
     anim_names = set()
     region_names = [r["name"] for r in regions]
@@ -172,4 +181,5 @@ def load_atlas(path: Path) -> Atlas:
         tuple(packed),
         tuple(tuple(r) for r in region_values),
         (cols, rows),
+        cell_flags,
     )

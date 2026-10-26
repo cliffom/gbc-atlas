@@ -12,6 +12,8 @@ Add to the project's `pyproject.toml`:
 manifests = ["assets/art/*/*.atlas.json"]
 output = "src/generated"
 types-header = "include/asset_types.h"
+# Optional GBDK output: bank = "auto" (or integer 0..255; 255 means auto).
+# Optional exact tile/pair reuse: deduplicate = true.
 
 [tool.gbc-atlas.retention]
 roots = ["assets/art", "assets/review"]
@@ -48,6 +50,22 @@ and the shared type header. Handoff never grants artwork approval or promotes
 drafts on its own: production inputs must already have approval evidence matching
 their exact digest. Changes to project configuration do not invalidate pack
 digests; changes to bound pack metadata or files do.
+
+For GBDK autobanking, set `bank = "auto"` in `[tool.gbc-atlas]`. All arrays for
+each atlas share its one bank; loaders must switch using `BANK(<id>)` before
+reading any of them and restore bank state afterwards. Use fixed-ROM switching
+code and compile/link with `-autobank`. See [the format contract](format.md).
+Omit `bank` to preserve existing standard-C output. Output options apply equally
+to `handoff`, `generate`, and read-only `check`; no post-processing is needed.
+
+Set `deduplicate = true` to reuse exact tiles and X/Y/XY mirrors within each
+kind and local palette. The handoff reports emitted tiles and savings. Existing
+pack approvals remain valid because this setting does not alter pack metadata.
+Loaders/previews must consume the optional cell flags; sprites flip as whole
+8×16 pairs. Resolve named regions through cell maps, never fixed tile indices.
+Read [the reconstruction contract](format.md) before enabling this in a consumer.
+`validate <manifest> --deduplicate` estimates savings independently of project
+configuration. Both output settings are opt-in and can be enabled separately.
 
 Retention is optional. Omit its table to leave all unreferenced artwork untouched.
 When enabled, only the manifest and its declared PNG/source/preview/review files

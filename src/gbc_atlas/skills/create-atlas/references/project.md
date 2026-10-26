@@ -58,6 +58,8 @@ code and compile/link with `-autobank`. See [the format contract](format.md).
 Omit `bank` to preserve existing standard-C output. Output options apply equally
 to `handoff`, `generate`, and read-only `check`; no post-processing is needed.
 
+The `bank` and `deduplicate` output settings require gbc-atlas 0.3.0 or newer.
+
 Set `deduplicate = true` to reuse exact tiles and X/Y/XY mirrors within each
 kind and local palette. The handoff reports emitted tiles and savings. Existing
 pack approvals remain valid because this setting does not alter pack metadata.

@@ -6,7 +6,7 @@ A minimal project using the installed CLI, TOML configuration, and two Make
 commands. There is no project-specific Python. The artwork is a synthetic
 technical fixture; its approval record is explicitly a test stand-in.
 
-After installing `gbc-atlas==0.2.0` in your environment, run from this directory:
+After installing `gbc-atlas==0.3.0` in your environment, run from this directory:
 
 ```sh
 make assets

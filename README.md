@@ -102,6 +102,53 @@ manifest or a recursively searched directory. Configured `generate` is also
 supported but refuses extras that require retirement; use `handoff` for those.
 Do not mix `--config` with explicit input/output arguments.
 
+## Optional GBDK ROM banking
+
+Set `bank = "auto"` in `[tool.gbc-atlas]` to emit autobanked atlases, or an
+integer `0..255` for a GBDK bank pragma (`255` is the autobank sentinel).
+For explicit inputs use `generate/check --input ... --output ... --bank auto`.
+Use the same settings for generation and read-only checks. Omission preserves
+the original toolchain-neutral output byte for byte. Output configuration does
+not change manifest v1 or approval digests.
+
+Banked output includes GBDK's platform header, a `<ID>_BANKED` marker,
+`BANKREF(<id>)`, and `BANKREF_EXTERN(<id>)`. Every array for one atlas, including
+regions and animations, shares one translation unit and one ROM bank. Compile
+and link autobanked output with GBDK `-autobank` and a suitable cartridge type.
+An atlas must fit in one bank; the linker owns placement and capacity checks.
+
+From code executing in fixed ROM (or a safe fixed-ROM loader), save
+`CURRENT_BANK`, call `SWITCH_ROM(BANK(example_prop))`, read/copy/upload the arrays,
+then restore the saved bank. All metadata reads require the same bank as tiles;
+near pointers carry no bank information. Do not switch out the currently executing
+code, retain near pointers for later reads without switching again, or let
+interrupt handlers change banks without restoring them. See the bundled
+[format contract](src/gbc_atlas/skills/create-atlas/references/format.md) for an example.
+
+## Optional deduplication and flip reuse
+
+Set `deduplicate = true` in `[tool.gbc-atlas]`, or use `--deduplicate` with
+explicit `generate/check --input ... --output ...`. To estimate savings without
+approval or writes, run `gbc-atlas validate <manifest> --deduplicate`.
+Validation and handoff report original/emitted tile counts and tiles saved.
+Both options are output policy: existing pack approvals remain valid, and
+omitting the options preserves all generated files byte for byte.
+
+Deduplication keeps the first occurrence in encoding order and reuses exact
+2bpp indices only within the same kind and local palette. X/Y/XY mirrors reuse
+the same tile with per-cell attribute bits `0x20`/`0x40` in `<id>_cell_flags`.
+Sprites reuse whole 8×16 even/odd pairs: Y flips the entire pair and swaps its
+displayed halves. Named region rectangles and animation references stay stable;
+resolve their cells through maps rather than hard-coded tile IDs or contiguous
+byte ranges. The [format contract](src/gbc_atlas/skills/create-atlas/references/format.md)
+specifies reconstruction for compiler previews and runtime loaders.
+
+This is an optional C interface v1 extension: `<ID>_HAS_CELL_FLAGS` and the flags
+array exist only with deduplication enabled. The shared type header and
+`AssetRegion` layout are unchanged. Loaders must consume flags when enabled;
+old loaders that ignore flips cannot reconstruct deduplicated art correctly.
+VRAM/palette allocation and runtime ROM bank switching remain consumer-owned.
+
 ## Python API
 
 ```python
@@ -115,7 +162,11 @@ outputs["asset_types.h"] = render_types()
 ```
 
 `Atlas` exposes `manifest`, `digest`, `tiles`, `cell_tiles`, `palettes`, `regions`,
-and `dimensions` (columns, rows). `load_atlas` performs technical validation and
+and `dimensions` (columns, rows). `cell_flags` is `None` by default or a row-major
+tuple when `load_atlas(..., deduplicate=True)` is used; `tiles_saved` reports the
+reduction. `render_c(atlas, bank="auto")` enables banking independently.
+`plan_handoff(..., bank="auto", deduplicate=True)` exposes both output policies.
+`load_atlas` performs technical validation and
 encoding; it does not require approval. `render_c` is also available for technical
 fixtures. Production workflows call `verify_approval` before rendering. The CLI
 enforces that gate. For Python-based integrations, `load_project`,

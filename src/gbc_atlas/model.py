@@ -13,3 +13,8 @@ class Atlas:
     palettes: tuple[int, ...]
     regions: tuple[tuple[int, ...], ...]
     dimensions: tuple[int, int]
+    cell_flags: tuple[int, ...] | None = None
+
+    @property
+    def tiles_saved(self) -> int:
+        return len(self.cell_tiles) - len(self.tiles) // 16

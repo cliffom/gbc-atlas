@@ -21,7 +21,12 @@ connections, backing, palette roles, anchors, and animation facings/timing.
 Reuse known choices. Ask only when a missing choice materially changes the art.
 Explain cell counts and OAM costs; per-atlas converter ceilings do not allocate
 scene resources. Budget BG/OBJ VRAM, palette slots, OAM and scanline occupancy,
-upload work, and linked ROM capacity before runtime integration.
+upload work, and linked ROM capacity before runtime integration. Follow the
+format contract's region/frame palette interpretation: BG compares all four
+ordered entries; OBJ compares ordered entries 1–3. Include the consumer-selected
+animation frames, and distinguish the eight-local-palette bundle ceiling from
+the separate BG/OBJ scene pools. Atlas validation proves neither scene fit nor
+human approval.
 
 ## Author and inspect
 

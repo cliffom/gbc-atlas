@@ -18,9 +18,9 @@ Tomli for TOML configuration.
 ## Choose your starting path
 
 **Working without an agent:** follow the
-[getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/docs/GETTING_STARTED.md).
+[getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/docs/GETTING_STARTED.md).
 Try the complete synthetic pack first, then author/export your own artwork in
-Aseprite, prepare the [manifest](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/src/gbc_atlas/skills/create-atlas/references/format.md),
+Aseprite, prepare the [manifest](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/src/gbc_atlas/skills/create-atlas/references/format.md),
 review the revision, and record approval. No skill installation or MCP connection
 is required for this direct workflow.
 
@@ -39,14 +39,14 @@ allocation, and gameplay tests.
 
 ## Install and use
 
-For a fresh C game project, follow the [getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/docs/GETTING_STARTED.md).
+For a fresh C game project, follow the [getting-started guide](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/docs/GETTING_STARTED.md).
 It covers virtual environments or Poetry, a runnable synthetic pack, native C
 compilation, real artwork approval, Make/pre-commit integration, and recovery.
 
 Install the package in your project's environment:
 
 ```sh
-poetry add gbc-atlas==0.3.0
+poetry add gbc-atlas==0.3.1
 ```
 
 Add project configuration to `pyproject.toml`:
@@ -86,8 +86,8 @@ approval, and orphan generated C/headers fail before moving/writing files.
 Interrupted I/O can still leave a partial handoff; recovery files are not deleted.
 Handoff does not promote drafts or grant human approval.
 
-- [Complete project configuration](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/src/gbc_atlas/skills/create-atlas/references/project.md)
-- [Executable consumer example](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/examples/consumer/README.md), tested using the
+- [Complete project configuration](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/src/gbc_atlas/skills/create-atlas/references/project.md)
+- [Executable consumer example](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/examples/consumer/README.md), tested using the
   installed CLI with synthetic assets and no consumer Python
 
 For simple explicit-input conversion, the original commands remain available:
@@ -190,8 +190,8 @@ Copy that whole directory into your client's skill directory, or load its
 A project-local adapter should identify art direction, paths, checks, budgets,
 and handoff policy. No global skill installation is performed automatically.
 
-- [Shared skill](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/src/gbc_atlas/skills/create-atlas/SKILL.md)
-- [Manifest v1 and C interface](https://github.com/cliffom/gbc-atlas/blob/v0.3.0/src/gbc_atlas/skills/create-atlas/references/format.md)
+- [Shared skill](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/src/gbc_atlas/skills/create-atlas/SKILL.md)
+- [Manifest v1 and C interface](https://github.com/cliffom/gbc-atlas/blob/v0.3.1/src/gbc_atlas/skills/create-atlas/references/format.md)
 
 Package version, manifest version, and C interface version are separate contracts.
 The initial extraction preserves manifest v1's digest algorithm and encoding,
@@ -200,6 +200,14 @@ they cannot prove human approval or that the PNG matches the editable document.
 The converter currently limits each atlas to 256 cells and eight local palettes;
 these are converter ceilings, not whole-scene VRAM, palette, or OAM allocations.
 
+Scene consumers should follow the [palette interpretation contract](src/gbc_atlas/skills/create-atlas/references/format.md#palette-interpretation-for-scene-consumers)
+for resolving region cells and animation frames. BG identity preserves all four
+ordered RGB5 entries; OBJ identity preserves ordered entries 1–3. The local
+bundle ceiling is distinct from the separate scene pools. See the synthetic
+[conformance examples](examples/palette-semantics/README.md) for portable bundles
+and passing/over-budget scene selections. Validation proves neither scene fit
+nor human artwork approval.
+
 ## Development
 
 ```sh
@@ -207,6 +215,7 @@ poetry install
 poetry run ruff check .
 poetry run ruff format --check .
 poetry run python -m unittest discover -s tests -v
+poetry check --lock
 poetry build
 ```
 

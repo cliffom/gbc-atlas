@@ -1,6 +1,6 @@
 # Getting started
 
-This guide targets **gbc-atlas 0.3.0 or newer** and a POSIX shell on macOS or Linux.
+This guide targets **gbc-atlas 0.3.1 or newer** and a POSIX shell on macOS or Linux.
 You need Python 3.10+, Git, and Make. A native C compiler is needed only for the
 optional compilation check. No GBDK installation or live editor is needed to try
 the synthetic example. You can author real packs directly in Aseprite without an
@@ -23,7 +23,7 @@ virtual environment:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-printf 'gbc-atlas==0.3.0\n' > requirements-assets.txt
+printf 'gbc-atlas==0.3.1\n' > requirements-assets.txt
 python -m pip install -r requirements-assets.txt
 ```
 
@@ -48,7 +48,7 @@ package-mode = false
 Then install:
 
 ```sh
-poetry add gbc-atlas==0.3.0
+poetry add gbc-atlas==0.3.1
 ```
 
 For an existing Poetry project, keep its metadata and skip initialization.
@@ -60,7 +60,7 @@ Make with `GBC_ATLAS='poetry run gbc-atlas'`.
 Download the matching release's example once:
 
 ```sh
-git clone --depth 1 --branch v0.3.0 https://github.com/cliffom/gbc-atlas.git ../gbc-atlas-demo
+git clone --depth 1 --branch v0.3.1 https://github.com/cliffom/gbc-atlas.git ../gbc-atlas-demo
 ```
 
 Copy its assets, configuration, and Make targets into your **empty** project.
@@ -225,7 +225,7 @@ Use the same release for the package, bundled skill, and shared
 ```yaml
 repos:
   - repo: https://github.com/cliffom/gbc-atlas
-    rev: v0.3.0
+    rev: v0.3.1
     hooks:
       - id: gbc-atlas-check
 ```

@@ -94,6 +94,89 @@ editable file. The author must export from the exact reviewed document, confirm
 dimensions/frame count through MCP, and record approval honestly. Do not use the
 digest as a substitute for inspecting the images.
 
+## Palette interpretation for scene consumers
+
+Manifest v1 palette IDs are **local to one atlas**. `palettes[p][i]` is the
+RGB5 triplet for encoded color index `i` in local palette `p`; preserve the
+entry order. `cell_palettes` assigns one local ID to every 8×8 source cell,
+including explicitly named padding. A region can use several local palettes.
+There is no region-wide or animation-wide palette field.
+
+To resolve a manifest region, let `columns = PNG_width / 8`. Iterate `cy` from
+`region.y / 8` through `(region.y + region.height) / 8 - 1`, then `cx` from
+`region.x / 8` through `(region.x + region.width) / 8 - 1`. For each cell:
+
+```text
+cell = cy * columns + cx
+local_id = cell_palettes[cell]
+ordered_rgb5 = palettes[local_id]
+pool = BG if region.kind == "tile" else OBJ
+comparison_key = (pool, ordered_rgb5 if pool == BG else ordered_rgb5[1:4])
+```
+
+The Python `Atlas.regions` and generated `AssetRegion` rectangles already use
+cell coordinates and sizes; do not divide those by eight again. Manifest
+rectangles use pixels. `Atlas.palettes` and generated `<id>_palettes` flatten
+all four entries of every local palette as `r | (g << 5) | (b << 10)`, so entry
+`i` of palette `p` is at offset `4*p + i`. This packing preserves RGB5 identity.
+
+Read `cell_palettes` at the **source cell**, never at `cell_tiles[cell]`.
+Mixed atlases encode sprite pairs first, so encoded tile IDs can differ from
+source-cell positions. Optional deduplication changes tile/flip maps without
+changing palette assignments. Same-kind overlapping regions refer to the same
+cells and palette requirements; they do not create new identities. Palettes
+that no selected cell references do not contribute to that selection, even
+though they remain declared and count toward the bundle's local ceiling.
+
+For sprite regions, each vertical 8×16 pair has one shared **local ID** in its
+top and bottom cells; even equivalent palettes with different local IDs cannot
+be assigned to opposite halves. Wider/taller sprite regions may use different
+palettes in different pairs. Regions cannot mix kinds internally. Tile/sprite
+overlap, incomplete or vertically misaligned sprite pairs, per-pixel palette
+selection, and 8×8 sprite regions are unsupported. There are no external-atlas
+region references in manifest v1.
+
+An animation frame's `region` names a region in the same manifest. Resolve
+that region exactly as above for each included frame; later frames may add
+palettes absent from the first frame. Frames share kind, dimensions, and origin,
+but need not share palette IDs or identities. Frame timing does not change
+identity. The scene consumer chooses the animation-frame closure and residency
+policy; the converter does not choose which animations or regions a scene uses.
+
+For consumers preserving encoded pixel indices, compare palettes as follows:
+
+| Pool | Identity within that pool | Consequence |
+| --- | --- | --- |
+| BG (tiles, including window/UI) | All four ordered RGB5 entries, indices 0–3 | Entry zero is opaque and participates in identity. |
+| OBJ (sprites) | Ordered RGB5 entries 1–3 | Ignore entry zero: encoded index zero is transparent, regardless of its stored RGB. |
+
+Equivalent identities can share a scene slot within the same pool, including
+across atlases and repeated local declarations. BG and OBJ use separate pools;
+a matching list does not merge those pools. Comparing unordered color sets is
+incorrect: swapping visible entries changes encoded-index meaning and requires
+explicit pixel-index remapping before the palettes can share a slot. These keys
+compare all relevant entries even when particular pixels do not use every entry.
+They do not authorize recoloring, sorting, remapping, or converter deduplication
+across palette IDs. Sprite transparent PNG pixels may have arbitrary RGB;
+visible pixels must match entries 1–3 exactly, and partial alpha is rejected.
+
+The eight-local-palette ceiling counts **every declared palette**, including
+unused and equivalent declarations, across both kinds in one bundle. It is
+separate from the hardware's eight BG/window slots and eight OBJ slots
+([Pan Docs — Palettes](https://github.com/gbdev/pandocs/blob/master/src/Palettes.md)).
+Several valid bundles may exceed a scene pool when combined. Technical atlas
+validation establishes neither whole-scene fit nor human artwork approval.
+Scene tools own composition, selected regions/frames, target profiles,
+reservations, diagnostics, and preflight; consuming builds own final runtime
+allocation, streaming, and ROM/emulator checks.
+
+The independent synthetic [palette conformance examples](../../../../../examples/palette-semantics/README.md)
+provide native PNG/manifest v1 bundles, explicit cell/region/frame oracles, and
+passing/over-budget multi-atlas selections for scene-tool tests. In an installed
+wheel, obtain these repository examples from the matching source distribution
+or repository checkout; the bundled format contract remains self-contained.
+These examples require no new interchange format or runtime Python dependency.
+
 ## Generated interface and limits
 
 `gbc-atlas generate --input <manifest-or-directory> --output <directory>` validates

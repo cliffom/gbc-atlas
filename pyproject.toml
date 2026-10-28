@@ -1,6 +1,6 @@
 [project]
 name = "gbc-atlas"
-version = "0.3.0"
+version = "0.3.1"
 description = "Deterministic palette-explicit Game Boy Color atlas to C conversion"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -11,7 +11,7 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/cliffom/gbc-atlas"
-Documentation = "https://github.com/cliffom/gbc-atlas/blob/v0.3.0/docs/GETTING_STARTED.md"
+Documentation = "https://github.com/cliffom/gbc-atlas/blob/v0.3.1/docs/GETTING_STARTED.md"
 
 [project.scripts]
 gbc-atlas = "gbc_atlas.cli:main"

@@ -200,6 +200,14 @@ they cannot prove human approval or that the PNG matches the editable document.
 The converter currently limits each atlas to 256 cells and eight local palettes;
 these are converter ceilings, not whole-scene VRAM, palette, or OAM allocations.
 
+Scene consumers should follow the [palette interpretation contract](src/gbc_atlas/skills/create-atlas/references/format.md#palette-interpretation-for-scene-consumers)
+for resolving region cells and animation frames. BG identity preserves all four
+ordered RGB5 entries; OBJ identity preserves ordered entries 1–3. The local
+bundle ceiling is distinct from the separate scene pools. See the synthetic
+[conformance examples](examples/palette-semantics/README.md) for portable bundles
+and passing/over-budget scene selections. Validation proves neither scene fit
+nor human artwork approval.
+
 ## Development
 
 ```sh
@@ -207,6 +215,7 @@ poetry install
 poetry run ruff check .
 poetry run ruff format --check .
 poetry run python -m unittest discover -s tests -v
+poetry check --lock
 poetry build
 ```
 
